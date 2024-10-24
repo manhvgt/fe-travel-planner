@@ -1,8 +1,8 @@
 /* Global Variables */
 const serverUrl_base = 'http://localhost:8080/';
 const url_weather = 'weather';
-const api_current = 'current';
-const api_forecast = 'forecast';
+const api_forecast = 'forecast'; // Current weather and forecast
+const api_predict = 'predict'; // Predicted forecast
 
 // DOM elements
 // Input
@@ -41,15 +41,18 @@ export function setDefaultDate() {
     dpkPlanningDate.value = today;
 }
 
-export function enableSubmitButton(enable) {
-    if(enable) {
-        btnGenerateByCity.disabled = false;
-        btnGenerateByCity.classList.remove('disabled');
-        btnGenerateByCity.textContent = 'Submit';
-    } else {
+// Update GUI while waiting API called and data processing
+export function updateGUI_processing(isProcessing) {
+    if(isProcessing) {
         btnGenerateByCity.disabled = true;
         btnGenerateByCity.classList.add('disabled');
         btnGenerateByCity.textContent = 'Processing...';
+        document.body.style.cursor = 'wait';
+    } else {
+        btnGenerateByCity.disabled = false;
+        btnGenerateByCity.classList.remove('disabled');
+        btnGenerateByCity.textContent = 'Generate Information';
+        document.body.style.cursor = 'default';
     }
 }
 
@@ -75,9 +78,9 @@ export async function getDataByCityListener(event) {
     // get weather data
     try {
         // req data
-        enableSubmitButton(false);
+        updateGUI_processing(true);
         await postWeather(rawData);
-        enableSubmitButton(true);
+        updateGUI_processing(false);
     } 
     catch(error) {
         // Error handling
@@ -94,7 +97,7 @@ export async function postWeather(rawData) {
         console.error("null input!");
     }
 
-    console.log("rawData: ", rawData);
+    // console.log("rawData: ", rawData);
     // Setup data
     const requestOptions = {
         method: "POST",
@@ -114,14 +117,8 @@ export async function postWeather(rawData) {
             console.error(`Ressponse status: ${response.statusText}`);
         }
         const data = await response.json();
-        const apiType = data.kpiType;
-        await updateGUI_current(data);
-
-        // Check if need update forecast
-        if(apiType === api_forecast) {
-            await updateGUI_current(data);
-        }
-        
+        // Update current weather info
+        await updateGUI(data);
     }
     catch(error) {
         // Error handling
@@ -129,13 +126,33 @@ export async function postWeather(rawData) {
     }
 };
 
+export async function updateGUI(info) {
+    if(!info) {
+        console.log("null input!");
+        return;
+    }
+    console.log("updateGUI info: ", info);
+    const apiType = info.apiType;
+
+    // Update current
+    updateGUI_current(info);
+
+    // Check type of update forecast
+    if(apiType === api_forecast) {
+        // Update using Weather API
+        updateGUI_forecast(info);
+    } else if (apiType === api_predict) {
+        // Update forecast base on predicted forecast
+        updateGUI_predict(info);
+    }
+}
+
 // Function to update GUI
 export async function updateGUI_current(info) {
     if(!info) {
         console.log("null input!");
         return;
     }
-    console.log("info: ", info);
     // update GUI
     outCurrentInfo.style.border = "2px solid #444";
 
@@ -150,19 +167,19 @@ export async function updateGUI_current(info) {
     outIconImg.src = info.current.icon;
     outCondition.textContent = `${info.current.condition}`;
     // outFeeling.textContent = `Your feeling: ${inFeelings.value.trim()}`;
-
-    // Forecast part
-    if(info.apiType === api_forecast) {
-        outForecastInfo.style.display = 'none';
-        outForecastInfo.innerHTML = ''
-        info.forecast.forEach(day => {
-            createForecastDay(day);
-        });
-        outForecastInfo.style.border = "2px solid #444";
-        outForecastInfo.offsetHeight; // force re-render
-        outForecastInfo.style.display = '';
-    }
 };
+
+// Forecast infomation update by weatherAPI
+export async function updateGUI_forecast(info) {
+    outForecastInfo.style.display = 'none';
+    outForecastInfo.innerHTML = ''    
+    info.forecast.forEach(day => {
+        createForecastDay(day);
+    });
+    outForecastInfo.style.border = "2px solid #444";
+    outForecastInfo.offsetHeight; // force re-render
+    outForecastInfo.style.display = '';
+}
 
 export async function createForecastDay(dayInfo) {
     // outForecastDay
@@ -194,8 +211,10 @@ export async function createForecastDay(dayInfo) {
     const chanceOfRain = document.createElement("div");
     chanceOfRain.textContent = `Rain: ${dayInfo.rain_chance}%`;
     dayDiv.appendChild(chanceOfRain);
-
+    // add child
     outForecastInfo.appendChild(dayDiv);
 }
 
-
+async function updateGUI_predict(info) {
+    console.log("updateGUI_predict start: ", info);
+}

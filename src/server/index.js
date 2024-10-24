@@ -21,12 +21,12 @@ app.use(express.static('dist'));
 console.log(__dirname);
 
 // Global Variables
-const API_KEY = process.env.API_KEY;
+const API_KEY = process.env.API_KEY_WEATHER_COM;
 const API_URL_BASE_CURRENT = process.env.API_URL_BASE_CURRENT;
 const API_URL_BASE_FORECAST = process.env.API_URL_BASE_FORECAST;
 const FORECAST_MAX_DAY = process.env.FORECAST_MAX_DAY;
-const API_CURRENT = 'current'
-const API_FORECAST = 'forecast'
+const API_FORECAST = 'forecast'; // Current weather and forecast
+const API_PREDICT = 'predict'; // Predicted forecast
 
 // Setup Server
 const hostname = process.env.HOST_NAME;;
@@ -54,33 +54,47 @@ app.post('/weather', async (req, res) => {
     // Based on date of difference call diff api
     let apiUrl = "";
     let apiType = "";
-    if(diffDate < 1) {
-        // Get current weather url
-        apiUrl = API_URL_BASE_CURRENT + API_KEY + `&q=${city}&aqi=no`;
-        apiType = API_CURRENT;
+    let apiRequestOptions = {
+        method: 'GET'
     }
-    else {
+
+    // Within 3 days
+    if(diffDate < FORECAST_MAX_DAY) {
         // Get forecast weather data url
-        const days = diffDate > FORECAST_MAX_DAY ? FORECAST_MAX_DAY : diffDate;
+        const days = FORECAST_MAX_DAY;
         apiUrl = API_URL_BASE_FORECAST + API_KEY + `&q=${city}&days=${days}&aqi=no&alerts=no`;
         apiType = API_FORECAST;
+        
+    } 
+    // 3 days or more
+    else {
+        console.log("3 days or more. diffDate = ", diffDate);
+        // Get Coordinates From City Name
+        const coordinates = await getCoordinatesByCity(city);
+        console.log("coordinates", coordinates);
+
+        // Get Weather Forecast from Coordinates setup
+        apiUrl = API_URL_BASE_CURRENT + API_KEY + `&q=${city}&aqi=no`;
+        apiType = API_PREDICT;
     }
     // apiUrl
     console.log("apiUrl: ", apiUrl);
 
     try {
         // call API
-        const response = await fetch(apiUrl, {
-            method: 'GET'
-        });
+        const response = await fetch(apiUrl, apiRequestOptions);
 
         // Process response
         if(!response.ok) {
             throw new Error(`Failed to fetch data: ${response.status}`);
         }
         const rawData = await response.json();
-
         const resData = await ConvertWeatherData(apiType, rawData);
+        
+        // Get some picture of the place
+        const photos = getPhotosOfCity(city);
+        resData.photos = photos;
+
         console.log("resData: \n", resData);
         res.json(resData);
     }
@@ -95,9 +109,9 @@ async function ConvertWeatherData(apiType, rawData) {
         console.error("null input!");
     }
     // console.log("rawData: ", rawData);
-
+    let resData = {};
     // Return value
-    const restData = {
+    resData = {
         apiType: apiType
         ,current: {
             country: rawData.location.country
@@ -130,12 +144,18 @@ async function ConvertWeatherData(apiType, rawData) {
             }
             forecast.push(dayForecast);
         });
-        restData.forecast = forecast;
+        resData.forecast = forecast;
+    }
+    // Predicted forecast
+    else if(apiType == API_PREDICT) {
+
     }
 
-    return restData;
+    // Return
+    return resData;
 }
 
+// Calculation the date
 function dayDifferenceFromToday(pickedDate) {
     const todayDate = new Date();
     const tempDate = new Date(pickedDate);
@@ -144,3 +164,14 @@ function dayDifferenceFromToday(pickedDate) {
     return ret;
 }
 
+// convert city names to latitude and longitude coordinates
+async function getCoordinatesByCity(cityName) {
+    console.log("getCoordinatesByCity ", cityName);
+    return {lat: 1, lon: 2};
+}
+
+// Get some photos of the place
+async function getPhotosOfCity(cityName) {
+    console.log("getPhotosOfCity ", cityName);
+    return {url: "photoURL"};
+}
