@@ -1,0 +1,92 @@
+/* Styling for Output */
+#outputCurrentInfo {
+    display: grid;
+    background: #ffffff;
+    height: auto-fit, minmax(18em, 1fr);
+    min-width: 15em;
+    width: 100%;
+    /* border: 2px solid #444; */
+    border-radius: 8px;
+    padding: 0.5em;
+    justify-content: center;
+}
+
+@media only screen and (max-width: 20em) {
+    #outputCurrentInfo {
+        grid-template-rows: repeat(auto-fit, minmax(10em, 1fr));;
+        grid-template-areas:
+        "weatherIllustration"
+        "weatherInfo"; 
+    }
+}
+
+@media only screen and (min-width: 20em) {
+    #outputCurrentInfo {
+        grid-template-columns: repeat(auto-fit, minmax(10em, 1fr));;
+        grid-template-areas: 
+        "weatherIllustration" "weatherInfo";
+    }
+}
+
+
+#weatherInfo {
+    display: subgrid;
+    grid-template-rows: auto;
+    grid-auto-rows: auto;
+    border-radius: 8px;
+    row-gap: 8px;
+}
+
+#weatherIllustration {
+    display: subgrid;
+    grid-template-rows: auto;
+    grid-auto-rows: auto;
+    border-radius: 8px;
+    place-items: left;
+    padding-right: 1em;
+    justify-content: center;
+    row-gap: 8px;
+}
+
+#weatherIllustration img {
+    width: 40%;
+    max-height: 100%;
+    object-fit: contain;  
+}
+
+#outFeeling {
+    display: flex;
+    width: auto;
+    color: aqua;
+}
+
+
+#forecastInfo {
+    display: grid;
+    background: #ffffff;
+    grid-template-columns: repeat(auto-fit, minmax(10em, 1fr));;
+    height: auto-fit, minmax(18em, 1fr);
+    min-width: 15em;
+    width: 100%;
+    border-radius: 8px;
+    padding: 0.5em;
+    justify-content: center;
+    gap: 1em;
+}
+
+#outForecastDay {
+    display: subgrid;
+    grid-template-rows: auto;
+    min-width: 5em;
+    grid-auto-rows: auto;
+    border-radius: 8px;
+    place-items: center;
+    justify-content: center;
+    row-gap: 8px;
+}
+
+#outForecastDay img {
+    width: 50%;
+    max-height: 50%;
+    object-fit: contain;  
+}

@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Weather Journal</title>
+  <link href="https://fonts.googleapis.com/css?family=Oswald:400,600,700|Ranga:400,700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header>
+    <div class="">
+        Logo
+    </div>
+    <div class="">
+        navigation
+    </div>
+  </header>
+  <div id = "app">
+    <div class ="holder headline">
+      Travel Planner
+    </div>
+    <div id="inCity" class="">
+      <label for="inCityName">Search by city name</label>
+      <input type="text" id="inCityName" placeholder="city name">
+    </div>
+    <div class ="holder date">
+      <label for="dpkPlanningDate">When will you go?</label>
+      <input type= "date" id="dpkPlanningDate" name="dpkPlanningDate">
+    </div>
+    <!-- <div class ="holder feel">
+      <label for="feelings">How are you feeling today?</label>
+      <textarea class= "myInput" id="inFeelings" placeholder="Enter your feelings here" rows="9" cols="50"></textarea>
+    </div> -->
+    <div class="holder generate">
+      <button id="btnGenerateByCity" type = "submit"> Generate</button>
+    </div>
+    <div id="outputCurrentInfo">
+      <div id="weatherIllustration">
+        <div id="outIcon">
+          <img id="outIconImg">
+        </div>
+        <div id="outCondition"></div>
+        <div id="outTemp"></div>
+      </div>
+      <div id="weatherInfo">
+        <div id="outCountry"></div>
+        <div id="outCity"></div>
+        <div id="outLocaltime"></div>
+        <div id="outHumidity"></div>
+        <div id="outFeelslike"></div>
+      </div>
+      <!-- <div id="outFeeling"></div> -->
+    </div>
+    <div id="forecastInfo">
+      <!-- <label id="outForecastLabel">Forecast</label> -->
+    </div>
+  </div>
+  <!-- <script>
+    // Check that service workers are supported
+    // if ('serviceWorker' in navigator) {
+    //     // Use the window load event to keep the page load performant
+    //     window.addEventListener('load', () => {
+    //         navigator.serviceWorker.register('/service-worker.js');
+    //     });
+    // }
+  </script> -->
+</body>
+</html>

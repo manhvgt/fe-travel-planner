@@ -1,0 +1,40 @@
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    background: #fffff8;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+main {
+    flex: 2;
+}
+
+section {
+    max-width: 800px;
+    margin: 10px auto;
+}
+
+#app{
+    display: grid;
+    grid-template-rows: auto;
+    grid-auto-rows: auto;
+    background: #ffffff;
+    color: #00ff22;
+    justify-content: center;
+    align-content: center;
+    grid-gap: 1em;
+    font-size: 1.2em;
+    line-height: 1.4;
+    align-items: center;
+    font-family: 'Oswald', sans-serif;
+    border-radius: 10px;
+}
+
+.holder{
+    border-radius: 10px;
+}
+
+.headline {
+    font-size: 2em;
+}
