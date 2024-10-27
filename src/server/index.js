@@ -50,48 +50,69 @@ app.post('/weather', async (req, res) => {
 
     // if today -> request for current data
     const diffDate = dayDifferenceFromToday(date);
+    let days = diffDate;
 
     // Based on date of difference call diff api
     let apiUrl = "";
     let apiType = "";
-    let apiRequestOptions = {
-        method: 'GET'
-    }
+    let coordinates = {lat: 0, lon: 0};
+
+    // default apiUrl for current weather
+    apiUrl = API_URL_BASE_CURRENT + API_KEY + `&q=${city}&aqi=no`;
 
     // Within 3 days
     if(diffDate < FORECAST_MAX_DAY) {
         // Get forecast weather data url
-        const days = FORECAST_MAX_DAY;
+        days = FORECAST_MAX_DAY;
         apiUrl = API_URL_BASE_FORECAST + API_KEY + `&q=${city}&days=${days}&aqi=no&alerts=no`;
         apiType = API_FORECAST;
-        
     } 
     // 3 days or more
     else {
-        console.log("3 days or more. diffDate = ", diffDate);
-        // Get Coordinates From City Name
-        const coordinates = await getCoordinatesByCity(city);
-        console.log("coordinates", coordinates);
-
-        // Get Weather Forecast from Coordinates setup
-        apiUrl = API_URL_BASE_CURRENT + API_KEY + `&q=${city}&aqi=no`;
         apiType = API_PREDICT;
+        // console.log("3 days or more. diffDate = ", diffDate);
+        // Get Coordinates From City Name
+        coordinates = await getCoordinatesByCity(city);
+        console.log("coordinates", coordinates);
     }
     // apiUrl
-    console.log("apiUrl: ", apiUrl);
+    console.log("current apiUrl: ", apiUrl);
 
     try {
         // call API
-        const response = await fetch(apiUrl, apiRequestOptions);
+        let requestOptions = {
+            method: 'GET'
+        }    
+        const response = await fetch(apiUrl, requestOptions);
 
         // Process response
         if(!response.ok) {
-            throw new Error(`Failed to fetch data: ${response.status}`);
+            console.error(`Failed to fetch data: Code: ${response.status}, (${response.text})`);
         }
         const rawData = await response.json();
-        const resData = await ConvertWeatherData(apiType, rawData);
         
+        // Get predicted forecast for longer date
+        if(apiType = API_PREDICT) {
+            // Get Weather Forecast from Coordinates 
+            days = FORECAST_MAX_DAY + diffDate;
+            apiUrl = process.env.API_URL_WEATHER_BIT + 
+                `&lat=${coordinates.lat}&lon=${coordinates.lon}&days=${days}&key=${process.env.API_KEY_WEATHER_BIT}`;
+            
+            // fetch
+            const response = await fetch(apiUrl, requestOptions);
+            console.log("forecast apiUrl: ", apiUrl);
+
+            // Process response
+            if(!response.ok) {
+                console.error(`Failed to fetch data: Code: ${response.status}, (${response.text})`);
+            }
+            rawData.forecast = await response.json();
+            console.log("rawData.forecast ", rawData.forecast);
+        }
+
         // Get some picture of the place
+        const resData = await ConvertWeatherData(apiType, rawData);
+
         const photos = getPhotosOfCity(city);
         resData.photos = photos;
 
@@ -127,10 +148,11 @@ async function ConvertWeatherData(apiType, rawData) {
         }
     };
 
+    let forecast = [];
     // Forecast
     if(apiType == API_FORECAST) {
         // Create forecast
-        const forecast = [];
+        
         rawData.forecast.forecastday.forEach(day => {
             const dayForecast = {
                 date: day.date
@@ -166,8 +188,36 @@ function dayDifferenceFromToday(pickedDate) {
 
 // convert city names to latitude and longitude coordinates
 async function getCoordinatesByCity(cityName) {
-    console.log("getCoordinatesByCity ", cityName);
-    return {lat: 1, lon: 2};
+    const apiUrl = process.env.API_URL_GEO + `${cityName}&apiKey=${process.env.API_KEY_GEO}`;
+    // console.log(apiUrl);
+    const options = {
+        method: 'GET'
+    }
+    let lat = 0, lon = 0;
+
+    // fetch
+    try {
+        const response = await fetch(apiUrl, options);
+
+        // check response
+        if(!response.ok) {
+            console.error(`Failed to fetch data: Code: ${response.status}, (${response.text})`);
+        }
+        const rawData = await response.json();
+
+        // Get info
+        if(rawData.features.length > 0) {
+            // console.log("rawData.features[0] ==", rawData.features[0].properties);
+            lat = rawData.features[0].properties.lat;
+            lon = rawData.features[0].properties.lon;
+            // console.log(`lat=${lat} lon=${lon}`);
+        }
+    } 
+    catch(error) {
+        // Error handling
+        console.error("Failed to fetch data: ", error);
+    }
+    return {lat: lat, lon: lon};
 }
 
 // Get some photos of the place
