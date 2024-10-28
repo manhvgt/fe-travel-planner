@@ -27,6 +27,7 @@ const API_URL_BASE_FORECAST = process.env.API_URL_BASE_FORECAST;
 const FORECAST_MAX_DAY = process.env.FORECAST_MAX_DAY;
 const API_FORECAST = 'forecast'; // Current weather and forecast
 const API_PREDICT = 'predict'; // Predicted forecast
+const ICON_PATH_BASE = '/src/static/icons/'
 
 // Setup Server
 const hostname = process.env.HOST_NAME;;
@@ -46,10 +47,8 @@ app.get('/weather', async (req, res) => {
 // Callback function to complete POST '/weather'
 app.post('/weather', async (req, res) => {
     console.log(req.body);
-    const { city, date } = req.body;
+    const { city, diffDate } = req.body;
 
-    // if today -> request for current data
-    const diffDate = dayDifferenceFromToday(date);
     let days = diffDate;
 
     // Based on date of difference call diff api
@@ -92,7 +91,7 @@ app.post('/weather', async (req, res) => {
         const rawData = await response.json();
         
         // Get predicted forecast for longer date
-        if(apiType = API_PREDICT) {
+        if(apiType == API_PREDICT) {
             // Get Weather Forecast from Coordinates 
             days = FORECAST_MAX_DAY + diffDate;
             apiUrl = process.env.API_URL_WEATHER_BIT + 
@@ -107,7 +106,7 @@ app.post('/weather', async (req, res) => {
                 console.error(`Failed to fetch data: Code: ${response.status}, (${response.text})`);
             }
             rawData.forecast = await response.json();
-            console.log("rawData.forecast ", rawData.forecast);
+            // console.log("rawData.forecast ", rawData.forecast);
         }
 
         // Get some picture of the place
@@ -152,7 +151,6 @@ async function ConvertWeatherData(apiType, rawData) {
     // Forecast
     if(apiType == API_FORECAST) {
         // Create forecast
-        
         rawData.forecast.forecastday.forEach(day => {
             const dayForecast = {
                 date: day.date
@@ -170,7 +168,21 @@ async function ConvertWeatherData(apiType, rawData) {
     }
     // Predicted forecast
     else if(apiType == API_PREDICT) {
-
+        rawData.forecast.data.forEach(day => {
+            const dayForecast = {
+                date: day.datetime
+                ,maxtemp_c: day.max_temp
+                ,maxtemp_f: celsiusToFahrenheit(day.max_temp).toFixed(2)
+                ,mintemp_c: day.min_temp
+                ,mintemp_f: celsiusToFahrenheit(day.min_temp).toFixed(2)
+                ,condition_icon: getIconUrl(day.weather.icon)
+                ,condition_txt: day.weather.description
+                ,rain_chance: day.pop
+            }
+            forecast.push(dayForecast);
+            // console.log("dayForecast: ", dayForecast);
+        });
+        resData.forecast = forecast;
     }
 
     // Return
@@ -224,4 +236,80 @@ async function getCoordinatesByCity(cityName) {
 async function getPhotosOfCity(cityName) {
     console.log("getPhotosOfCity ", cityName);
     return {url: "photoURL"};
+}
+
+// Weatherbit.io not support Fahrenheit, convert instead
+function celsiusToFahrenheit(celsius) {
+    return (celsius * 9/5) + 32;
+}
+
+// Weatherbit.io not support icon url, using other instead
+function getIconUrl(code) {
+    const icons = {
+        a01d: "https://i.ibb.co/wWfKNkz/a05d.png"
+        ,a01n: "https://i.ibb.co/2WqcdmY/a05n.png"
+        ,a02d: "https://i.ibb.co/wWfKNkz/a05d.png"
+        ,a02n: "https://i.ibb.co/2WqcdmY/a05n.png"
+        ,a03d: "https://i.ibb.co/wWfKNkz/a05d.png"
+        ,a03n: "https://i.ibb.co/2WqcdmY/a05n.png"
+        ,a04d: "https://i.ibb.co/wWfKNkz/a05d.png"
+        ,a04n: "https://i.ibb.co/2WqcdmY/a05n.png"
+        ,a05d: "https://i.ibb.co/wWfKNkz/a05d.png"
+        ,a05n: "https://i.ibb.co/2WqcdmY/a05n.png"
+        ,a06d: "https://i.ibb.co/wWfKNkz/a05d.png"
+        ,a06n: "https://i.ibb.co/2WqcdmY/a05n.png"
+        ,c01d: "https://i.ibb.co/nLGhTrX/c01d.png"
+        ,c01n: "https://i.ibb.co/1QvTwHd/c01n.png"
+        ,c02d: "https://i.ibb.co/n61wCqf/c02d.png"
+        ,c02n: "https://i.ibb.co/CQDt1d2/c02n.png"
+        ,c03d: "https://i.ibb.co/MfTkGfz/c03d.png"
+        ,c03n: "https://i.ibb.co/KWmBCyq/c03n.png"
+        ,c04d: "https://i.ibb.co/crp730Y/c04d.png"
+        ,c04n: "https://i.ibb.co/crp730Y/c04d.png"
+        ,d01d: "https://i.ibb.co/2cmdjm6/d03n.png"
+        ,d01n: "https://i.ibb.co/2cmdjm6/d03n.png"
+        ,d02d: "https://i.ibb.co/2cmdjm6/d03n.png"
+        ,d02n: "https://i.ibb.co/2cmdjm6/d03n.png"
+        ,d03d: "https://i.ibb.co/2cmdjm6/d03n.png"
+        ,d03n: "https://i.ibb.co/2cmdjm6/d03n.png"
+        ,f01d: "https://i.ibb.co/HX0bZQK/u00n.png"
+        ,f01n: "https://i.ibb.co/HX0bZQK/u00n.png"
+        ,r01d: "https://i.ibb.co/HX0bZQK/u00n.png"
+        ,r01n: "https://i.ibb.co/HX0bZQK/u00n.png"
+        ,r02d: "https://i.ibb.co/HX0bZQK/u00n.png"
+        ,r02n: "https://i.ibb.co/HX0bZQK/u00n.png"
+        ,r03d: "https://i.ibb.co/ftNpXP7/r03n.png"
+        ,r03n: "https://i.ibb.co/ftNpXP7/r03n.png"
+        ,r04d: "https://i.ibb.co/HX0bZQK/u00n.png"
+        ,r04n: "https://i.ibb.co/NSXnwFs/r06n.png"
+        ,r05d: "https://i.ibb.co/yp5nVMQ/r05d.png"
+        ,r05n: "https://i.ibb.co/NSXnwFs/r06n.png"
+        ,r06d: "https://i.ibb.co/HX0bZQK/u00n.png"
+        ,r06n: "https://i.ibb.co/NSXnwFs/r06n.png"
+        ,s01d: "https://i.ibb.co/JtxkpZ7/s04d.png"
+        ,s01n: "https://i.ibb.co/Qm10p7m/s04n.png"
+        ,s02d: "https://i.ibb.co/gPpmK7y/s03n.png"
+        ,s02n: "https://i.ibb.co/gPpmK7y/s03n.png"
+        ,s03d: "https://i.ibb.co/gPpmK7y/s03n.png"
+        ,s03n: "https://i.ibb.co/gPpmK7y/s03n.png"
+        ,s04d: "https://i.ibb.co/JtxkpZ7/s04d.png"
+        ,s04n: "https://i.ibb.co/Qm10p7m/s04n.png"
+        ,s05d: "https://i.ibb.co/LSSbtM7/s05n.png"
+        ,s05n: "https://i.ibb.co/LSSbtM7/s05n.png"
+        ,s06d: "https://i.ibb.co/4Z1Sd5V/s06d.png"
+        ,s06n: "https://i.ibb.co/4Z1Sd5V/s06d.png"
+        ,t01d: "https://i.ibb.co/bgX9VJK/t03d.png"
+        ,t01n: "https://i.ibb.co/Vg8DsgQ/t03n.png"
+        ,t02d: "https://i.ibb.co/bgX9VJK/t03d.png"
+        ,t02n: "https://i.ibb.co/Vg8DsgQ/t03n.png"
+        ,t03d: "https://i.ibb.co/bgX9VJK/t03d.png"
+        ,t03n: "https://i.ibb.co/Vg8DsgQ/t03n.png"
+        ,t04d: "https://i.ibb.co/NFLX7GG/t05d.png"
+        ,t04n: "https://i.ibb.co/kGMnGCS/t05n.png"
+        ,t05d: "https://i.ibb.co/NFLX7GG/t05d.png"
+        ,t05n: "https://i.ibb.co/kGMnGCS/t05n.png"
+        ,u00d: "https://i.ibb.co/HX0bZQK/u00n.png"
+        ,u00n: "https://i.ibb.co/HX0bZQK/u00n.png"
+    }
+    return icons[code];
 }

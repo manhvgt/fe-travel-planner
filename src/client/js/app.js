@@ -3,6 +3,7 @@ const serverUrl_base = 'http://localhost:8080/';
 const url_weather = 'weather';
 const api_forecast = 'forecast'; // Current weather and forecast
 const api_predict = 'predict'; // Predicted forecast
+const api_max_days = 16;
 
 // DOM elements
 // Input
@@ -56,6 +57,15 @@ export function updateGUI_processing(isProcessing) {
     }
 }
 
+// Calculation the date
+function dayDifferenceFromToday(pickedDate) {
+    const todayDate = new Date();
+    const tempDate = new Date(pickedDate);
+    const diffTime = (tempDate.getTime() - todayDate.getTime());
+    const ret = Math.ceil(diffTime / (1000 * 3600 * 24));
+    return ret;
+}
+
 // Function to handle generate button by City Name
 export async function getDataByCityListener(event) {
     // setup
@@ -69,10 +79,17 @@ export async function getDataByCityListener(event) {
         alert("Please enter city name and pick a date then retry!");
         return;
     }
+    // Too long
+    const diffDate = dayDifferenceFromToday(pickedDate);
+    if(diffDate > api_max_days) {
+        alert(`The date is too far. Currently app supports ${api_max_days} days`);
+        return;
+    }
+
     // set data
     const rawData = {
         city: city
-        ,date: pickedDate
+        ,diffDate: diffDate
     };
 
     // get weather data
@@ -165,6 +182,7 @@ export async function updateGUI_current(info) {
     outFeelslike.innerHTML = `Feel like: ${info.current.feelslikec}\u00B0C (${info.current.feelslikef}\u00B0F)`;
 
     outIconImg.src = info.current.icon;
+    outIconImg.alt = info.current.condition;
     outCondition.textContent = `${info.current.condition}`;
     // outFeeling.textContent = `Your feeling: ${inFeelings.value.trim()}`;
 };
@@ -193,6 +211,7 @@ export async function createForecastDay(dayInfo) {
     const iconDiv = document.createElement("div");
     const iconImg = document.createElement("img");
     iconImg.src = dayInfo.condition_icon;
+    outIconImg.alt = dayInfo.condition;
     iconDiv.appendChild(iconImg);
     dayDiv.appendChild(iconDiv);
     // condition
@@ -216,5 +235,7 @@ export async function createForecastDay(dayInfo) {
 }
 
 async function updateGUI_predict(info) {
-    console.log("updateGUI_predict start: ", info);
+    // console.log("updateGUI_predict start: ", info);
+    // Same interface -> reuse function
+    updateGUI_forecast(info);
 }
