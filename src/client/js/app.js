@@ -3,7 +3,10 @@ const serverUrl_base = 'http://localhost:8080/';
 const url_weather = 'weather';
 const api_forecast = 'forecast'; // Current weather and forecast
 const api_predict = 'predict'; // Predicted forecast
-const api_max_days = 16;
+const api_forecast_max_days = 16;
+const api_min_days = -1;
+const api_max_days = 3;
+const api_max_photos = 4;
 
 // DOM elements
 // Input
@@ -25,6 +28,8 @@ const outCondition = document.getElementById("outCondition");
 // const outFeeling = document.getElementById("outFeeling");
 // Output (Forecast)
 const outForecastInfo = document.getElementById("forecastInfo");
+// Output (photos)
+const outPhotos = document.getElementById("outPhotos");
 
 // Add event listener to get data button
 document.addEventListener('DOMContentLoaded', () => {
@@ -66,6 +71,14 @@ function dayDifferenceFromToday(pickedDate) {
     return ret;
 }
 
+function dayDifference(start, end) {
+    const startDate = new Date(start);
+    const endDate = new Date(end);
+    const diffTime = (endDate.getTime() - startDate.getTime());
+    const ret = Math.ceil(diffTime / (1000 * 3600 * 24));
+    return ret;
+}
+
 // Function to handle generate button by City Name
 export async function getDataByCityListener(event) {
     // setup
@@ -81,14 +94,15 @@ export async function getDataByCityListener(event) {
     }
     // Too long
     const diffDate = dayDifferenceFromToday(pickedDate);
-    if(diffDate > api_max_days) {
-        alert(`The date is too far. Currently app supports ${api_max_days} days`);
+    if(diffDate > api_forecast_max_days) {
+        alert(`The date is too far. Currently app supports ${api_forecast_max_days} days`);
         return;
     }
 
     // set data
     const rawData = {
         city: city
+        // ,date: pickedDate
         ,diffDate: diffDate
     };
 
@@ -145,7 +159,7 @@ export async function postWeather(rawData) {
 
 export async function updateGUI(info) {
     if(!info) {
-        console.log("null input!");
+        console.error("null input!");
         return;
     }
     console.log("updateGUI info: ", info);
@@ -162,12 +176,18 @@ export async function updateGUI(info) {
         // Update forecast base on predicted forecast
         updateGUI_predict(info);
     }
+
+    // Update photos
+    if(info.photos.length > 0) {
+        updateGUI_photos(info.photos)
+    }
+
 }
 
 // Function to update GUI
 export async function updateGUI_current(info) {
     if(!info) {
-        console.log("null input!");
+        console.error("null input!");
         return;
     }
     // update GUI
@@ -211,7 +231,7 @@ export async function createForecastDay(dayInfo) {
     const iconDiv = document.createElement("div");
     const iconImg = document.createElement("img");
     iconImg.src = dayInfo.condition_icon;
-    outIconImg.alt = dayInfo.condition;
+    iconImg.alt = dayInfo.condition;
     iconDiv.appendChild(iconImg);
     dayDiv.appendChild(iconDiv);
     // condition
@@ -231,11 +251,55 @@ export async function createForecastDay(dayInfo) {
     chanceOfRain.textContent = `Rain: ${dayInfo.rain_chance}%`;
     dayDiv.appendChild(chanceOfRain);
     // add child
+    
+    // check
+    const dayDiff = dayDifference(dpkPlanningDate.value, dayInfo.date);
+    if( api_min_days <= dayDiff && dayDiff <= api_max_days ) {
+        dayDiv.style.display = '';
+    } else {
+        dayDiv.style.display = 'none';
+    }
     outForecastInfo.appendChild(dayDiv);
 }
 
-async function updateGUI_predict(info) {
+export async function updateGUI_predict(info) {
     // console.log("updateGUI_predict start: ", info);
     // Same interface -> reuse function
     updateGUI_forecast(info);
+}
+
+
+export async function updateGUI_photos(photos) {
+    outPhotos.style.display = 'none';
+    outPhotos.innerHTML = '';    
+    let count = api_max_photos > photos.length ? photos.length : api_max_photos;
+    let i = 0;
+    photos.forEach(photo => {
+        createPhotoItem(photo, i);
+        i++;
+    });
+    outPhotos.style.border = "2px solid #444";
+    outPhotos.offsetHeight; // force re-render
+    outPhotos.style.display = '';
+}
+
+export async function createPhotoItem(photo, i) {
+    const photoDiv = document.createElement("figure");
+    photoDiv.id = "outPhoto";
+    // Img
+    const img = document.createElement("img");
+    img.src = photo.previewURL;
+    img.alt = "No Image";
+    photoDiv.appendChild(img);
+    
+    // caption
+    let arr = photo.pageURL.split('/');
+    let txt = arr[arr.length-1].split('-');
+    txt.pop();
+    const caption = document.createElement("figcaption");
+    caption.textContent = txt.join(' ');
+    photoDiv.appendChild(caption);
+
+    outPhotos.appendChild(photoDiv);
+    if(i>api_max_photos) { photoDiv.style.display = 'none'; }
 }
