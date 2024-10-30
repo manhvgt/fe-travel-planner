@@ -43,43 +43,72 @@ app.get('/weather', async (req, res) => {
     res.send(projectData);
 });
 
-/* Using https://weatherapi.com */
 // Callback function to complete POST '/weather'
 app.post('/weather', async (req, res) => {
     console.log(req.body);
-    const { 
-        city
-        // ,date
-        ,diffDate
-    } = req.body;
-    
-    let days = diffDate;
-    
+    const { city ,diffDate } = req.body;
+
     // Based on date of difference call diff api
-    let apiUrl = "";
     let apiType = "";
-    let coordinates = {lat: 0, lon: 0};
-    
-    // default apiUrl for current weather
-    apiUrl = API_URL_BASE_CURRENT + API_KEY + `&q=${city}&aqi=no`;
-    
-    // Within 3 days
+
+    // Always acquire current or forecast 
+    let rawData = await getCurrentForecast(city, diffDate);
+    if(rawData === null) {
+        // create NG response
+        res.status(500).json({ error: 'Processing error', message: 'Something went wrong on the server.' });
+        return;
+    }
+
+    // Within max days
     if(diffDate < FORECAST_MAX_DAY) {
-        // Get forecast weather data url
-        days = FORECAST_MAX_DAY;
-        apiUrl = API_URL_BASE_FORECAST + API_KEY + `&q=${city}&days=${days}&aqi=no&alerts=no`;
         apiType = API_FORECAST;
     } 
-    // 3 days or more
+    // max days or more
     else {
         apiType = API_PREDICT;
         // Call API to Get Coordinates From City Name
-        coordinates = await getCoordinatesByCity(city);
+        const coordinates = await getCoordinatesByCity(city);
+        if(coordinates === null || coordinates === undefined || coordinates === "") {
+            // create NG response
+            res.status(500).json({ error: 'Processing error', message: 'Something went wrong on the server.' });
+            return;
+        }
         // console.log("coordinates", coordinates);
+
+        // Predicted forecast data
+        rawData.forecast = await getPredictedForecast(coordinates.lat, coordinates.lon, FORECAST_MAX_DAY + diffDate);
+        if(rawData.forecast === null || rawData.forecast === undefined || rawData.forecast === "") {
+            // create NG response
+            res.status(500).json({ error: 'Processing error', message: 'Something went wrong on the server.' });
+            return;
+        }
     }
-    // apiUrl
-    console.log("current apiUrl: ", apiUrl);
-    
+
+    // Convert data
+    const resData = await ConvertWeatherData(apiType, rawData);
+
+    // Weather and forecast info are acquired and request for photos  
+    const photos = await getPhotosOfCity(city);
+    resData.photos = photos;
+    // console.log("resData.photos: ", resData.photos);
+    res.json(resData);
+});
+
+function response500() {
+
+}
+
+// Get predicted forecast using http://api.weatherapi.com
+async function getCurrentForecast(city, days) {
+    // default apiUrl for current weather only
+    let apiUrl = API_URL_BASE_CURRENT + API_KEY + `&q=${city}&aqi=no`;
+
+    if (days < FORECAST_MAX_DAY) {
+        // get forecast instead
+        apiUrl = API_URL_BASE_FORECAST + API_KEY + `&q=${city}&days=${FORECAST_MAX_DAY}&aqi=no&alerts=no`;
+    } 
+    // console.log("getCurrentForecast apiUrl: ", apiUrl);
+
     try {
         // call API
         let requestOptions = {
@@ -90,59 +119,67 @@ app.post('/weather', async (req, res) => {
         // Process response
         if(!response.ok) {
             console.error(`Failed to fetch data: Code: ${response.status}, (${response.text})`);
+            return null;
         }
         const rawData = await response.json();
-        
-        // Get predicted forecast for longer date
-        if(apiType == API_PREDICT) {
-            // Get Weather Forecast from Coordinates 
-            days = FORECAST_MAX_DAY + diffDate;
-            apiUrl = process.env.API_URL_WEATHER_BIT + 
-            `&lat=${coordinates.lat}&lon=${coordinates.lon}&days=${days}&key=${process.env.API_KEY_WEATHER_BIT}`;
-            
-            // fetch
-            const response = await fetch(apiUrl, requestOptions);
-            console.log("forecast apiUrl: ", apiUrl);
-            
-            // Process response
-            if(!response.ok) {
-                console.error(`Failed to fetch data: Code: ${response.status}, (${response.text})`);
-            }
-            rawData.forecast = await response.json();
-            // console.log("rawData.forecast ", rawData.forecast);
-        }
-        
-        // Get some picture of the place
-        const resData = await ConvertWeatherData(apiType, rawData);
-        
-        // Check if weather and forecast info are acquired and request for photos  
-        if(resData.current !== null && resData.forecast.length >= 1 ) {
-            const photos = await getPhotosOfCity(city);
-            if(photos.length >= 0) {
-                resData.photos = photos;
-            }
-            // console.log("resData.photos: ", resData.photos);
-        }
-
-        // console.log("resData: \n", resData);
-        res.json(resData);
+        // console.log("getCurrentForecast rawData: ", rawData);
+        return rawData;
     }
     catch(error) {
         // Error handling
         console.error("Failed to fetch data: ", error);
+        return null;
     }
-});
+}
 
+// Get predicted forecast using http://api.weatherbit.io
+async function getPredictedForecast(lat, lon, days) {
+    // default apiUrl for current weather only
+    const apiUrl = process.env.API_URL_WEATHER_BIT + 
+            `&lat=${lat}&lon=${lon}&days=${days}&key=${process.env.API_KEY_WEATHER_BIT}`;
+    // console.log("getPredictedForecast apiUrl: ", apiUrl);
+
+    try {
+        // call API
+        const requestOptions = {
+            method: 'GET'
+        }    
+        const response = await fetch(apiUrl, requestOptions);
+        
+        // Process response
+        if(!response.ok) {
+            console.error(`Failed to fetch data: Code: ${response.status}, (${response.text})`);
+            return null;
+        }
+        const rawData = await response.json();
+        // console.log("getPredictedForecast rawData: ", rawData);
+        return rawData;
+    }
+    catch(error) {
+        // Error handling
+        console.error("Failed to fetch data: ", error);
+        return null;
+    }
+}
+
+// Convert raw data to response format
 async function ConvertWeatherData(apiType, rawData) {
     if(!rawData) {
         console.error("null input!");
     }
-    // console.log("rawData: ", rawData);
+    // console.log("ConvertWeatherData rawData: ", rawData);
+
     let resData = {};
     // Return value
     resData = {
         apiType: apiType
-        ,current: {
+    };
+    
+    let forecast = [];
+    // Forecast
+    if(apiType == API_FORECAST) {
+        // Create Current
+        resData.current = {
             country: rawData.location.country
             ,city: rawData.location.name
             ,localtime: rawData.location.localtime
@@ -154,11 +191,6 @@ async function ConvertWeatherData(apiType, rawData) {
             ,icon: rawData.current.condition.icon
             ,condition: rawData.current.condition.text
         }
-    };
-    
-    let forecast = [];
-    // Forecast
-    if(apiType == API_FORECAST) {
         // Create forecast
         rawData.forecast.forecastday.forEach(day => {
             const dayForecast = {
@@ -198,7 +230,7 @@ async function ConvertWeatherData(apiType, rawData) {
     return resData;
 }
 
-// convert city names to latitude and longitude coordinates
+// convert city names to latitude and longitude coordinates using API https://api.geoapify.com
 async function getCoordinatesByCity(cityName) {
     const apiUrl = process.env.API_URL_GEO + `${cityName}&apiKey=${process.env.API_KEY_GEO}`;
     // console.log(apiUrl);
@@ -214,6 +246,7 @@ async function getCoordinatesByCity(cityName) {
         // check response
         if(!response.ok) {
             console.error(`Failed to fetch data: Code: ${response.status}, (${response.text})`);
+            return null
         }
         const rawData = await response.json();
         
@@ -227,6 +260,7 @@ async function getCoordinatesByCity(cityName) {
     catch(error) {
         // Error handling
         console.error("Failed to fetch data: ", error);
+        return null;
     }
     return {lat: lat, lon: lon};
 }
@@ -237,9 +271,9 @@ app.post('/photo', async (req, res) => {
 });
 
 
-// Get some photos of the place
+// Get some photos of the place using API https://pixabay.com/
 async function getPhotosOfCity(cityName) {
-    console.log("getPhotosOfCity ", cityName);
+    // console.log("getPhotosOfCity ", cityName);
     const apiUrl = process.env.API_URL_PIXABAY + process.env.API_KEY_PIXABAY + `&q=${cityName}`;
     const options = {
         method: 'GET'
@@ -253,6 +287,7 @@ async function getPhotosOfCity(cityName) {
         // check response
         if(!response.ok) {
             console.error(`Failed to fetch data: Code: ${response.status}, (${response.text})`);
+            return null;
         }
         const rawData = await response.json();
 

@@ -93,10 +93,10 @@
 }
 
 #outPhotos {
-    display: grid;
+    display: none;
     background: #ffffff;
-    grid-template-columns: repeat(auto-fit, minmax(18em, 1fr));;
-    height: auto-fit, minmax(18em, 1fr);
+    // grid-template-rows: repeat(auto-fit, minmax(18em, 1fr));;
+    // height: auto-fit, minmax(18em, 1fr);
     min-width: 18em;
     width: 100%;
     border-radius: 8px;
@@ -105,13 +105,10 @@
     gap: 1em;
 }
 
-#outPhoto {
+#outImageViewer {
     display: flex;
     border-radius: 8px;
-}
-
-#outPhoto img {
     width: 100%;
     max-height: 100%;
-    object-fit: contain;  
+    object-fit: contain;
 }

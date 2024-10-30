@@ -5,15 +5,19 @@ const api_forecast = 'forecast'; // Current weather and forecast
 const api_predict = 'predict'; // Predicted forecast
 const api_forecast_max_days = 16;
 const api_min_days = -1;
-const api_max_days = 3;
-const api_max_photos = 4;
+const api_max_days = 2;
+
+// For Image viewer
+let imgViewerInterval = 3500;
+let imgViewerEnable = false;
+let imgViewerCount = 16;
+let imgViewerSrc = [];
+let imgViewerIdx = 0;
 
 // DOM elements
 // Input
 const btnGenerateByCity = document.getElementById("btnGenerateByCity");
 const inCityName = document.getElementById("inCityName");
-// const inFeelings = document.getElementById("inFeelings");
-// const btnGenerateForecast = document.getElementById("btnGenerateForecast");
 const dpkPlanningDate = document.getElementById("dpkPlanningDate");
 // Output (Current)
 const outCurrentInfo = document.getElementById("outputCurrentInfo");
@@ -25,20 +29,20 @@ const outFeelslike = document.getElementById("outFeelslike");
 const outHumidity = document.getElementById("outHumidity");
 const outIconImg = document.getElementById("outIconImg");
 const outCondition = document.getElementById("outCondition");
-// const outFeeling = document.getElementById("outFeeling");
 // Output (Forecast)
 const outForecastInfo = document.getElementById("forecastInfo");
 // Output (photos)
 const outPhotos = document.getElementById("outPhotos");
+const imgViwer = document.getElementById("outImageViewer");
 
 // Add event listener to get data button
 document.addEventListener('DOMContentLoaded', () => {
     // Set default value as today
     setDefaultDate();
+    setInterval(switchImage, imgViewerInterval);
 
     // Add listener
     btnGenerateByCity.addEventListener('click', getDataByCityListener);
-
 });
 
 export function setDefaultDate() {
@@ -146,6 +150,8 @@ export async function postWeather(rawData) {
         // check response
         if(!response.ok) {
             console.error(`Ressponse status: ${response.statusText}`);
+            alert("Failed to get data. Something went wrong on the server!");
+            return;
         }
         const data = await response.json();
         // Update current weather info
@@ -165,23 +171,31 @@ export async function updateGUI(info) {
     console.log("updateGUI info: ", info);
     const apiType = info.apiType;
 
-    // Update current
-    updateGUI_current(info);
-
     // Check type of update forecast
     if(apiType === api_forecast) {
+        updateGUI_reset();
+        // Update current
+        updateGUI_current(info);
         // Update using Weather API
         updateGUI_forecast(info);
     } else if (apiType === api_predict) {
+        updateGUI_reset();
         // Update forecast base on predicted forecast
         updateGUI_predict(info);
     }
-
     // Update photos
     if(info.photos.length > 0) {
         updateGUI_photos(info.photos)
     }
+}
 
+export async function updateGUI_reset() {
+    outCurrentInfo.style.display = 'none';
+    outForecastInfo.style.display = 'none';
+    outForecastInfo.innerHTML = '';
+    outPhotos.style.display = 'none';
+    imgViewerEnable = false;
+    imgViewerSrc = [];
 }
 
 // Function to update GUI
@@ -190,10 +204,7 @@ export async function updateGUI_current(info) {
         console.error("null input!");
         return;
     }
-    // update GUI
-    outCurrentInfo.style.border = "2px solid #444";
-
-    // country, city, localtime, tempc, tempf, feelslikec, feelslikef, humidity, icon, condition, feelings
+    // country, city, localtime, tempc, tempf, feelslikec, feelslikef, humidity, icon, condition
     outCountry.textContent = 'Country: ' + info.current.country;
     outCity.textContent = 'City: ' + info.current.city;
     outLocaltime.textContent = `Local time: ${info.current.localtime}`;
@@ -204,13 +215,15 @@ export async function updateGUI_current(info) {
     outIconImg.src = info.current.icon;
     outIconImg.alt = info.current.condition;
     outCondition.textContent = `${info.current.condition}`;
-    // outFeeling.textContent = `Your feeling: ${inFeelings.value.trim()}`;
+
+    // update GUI
+    outCurrentInfo.style.border = "2px solid #444";
+    outForecastInfo.offsetHeight; // force re-render
+    outCurrentInfo.style.display = '';
 };
 
 // Forecast infomation update by weatherAPI
 export async function updateGUI_forecast(info) {
-    outForecastInfo.style.display = 'none';
-    outForecastInfo.innerHTML = ''    
     info.forecast.forEach(day => {
         createForecastDay(day);
     });
@@ -271,35 +284,18 @@ export async function updateGUI_predict(info) {
 
 export async function updateGUI_photos(photos) {
     outPhotos.style.display = 'none';
-    outPhotos.innerHTML = '';    
-    let count = api_max_photos > photos.length ? photos.length : api_max_photos;
-    let i = 0;
-    photos.forEach(photo => {
-        createPhotoItem(photo, i);
-        i++;
-    });
+    imgViewerEnable = true;
+    imgViewerCount = photos.length;
+    imgViewerSrc = Array.from(photos);
     outPhotos.style.border = "2px solid #444";
     outPhotos.offsetHeight; // force re-render
-    outPhotos.style.display = '';
+    outPhotos.style.display = 'block';
+    switchImage();
 }
 
-export async function createPhotoItem(photo, i) {
-    const photoDiv = document.createElement("figure");
-    photoDiv.id = "outPhoto";
-    // Img
-    const img = document.createElement("img");
-    img.src = photo.previewURL;
-    img.alt = "No Image";
-    photoDiv.appendChild(img);
-    
-    // caption
-    let arr = photo.pageURL.split('/');
-    let txt = arr[arr.length-1].split('-');
-    txt.pop();
-    const caption = document.createElement("figcaption");
-    caption.textContent = txt.join(' ');
-    photoDiv.appendChild(caption);
-
-    outPhotos.appendChild(photoDiv);
-    if(i>api_max_photos) { photoDiv.style.display = 'none'; }
+export function switchImage() {
+    if(imgViewerEnable) {
+        imgViewerIdx = (imgViewerIdx + 1) % imgViewerCount;
+        imgViwer.src = imgViewerSrc[imgViewerIdx].previewURL;
+    }
 }
