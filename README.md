@@ -17,6 +17,7 @@ For future development, It will allow user to save the trip into DB and review, 
     + ...
 
 ## Structure
+<pre>
 Project Root Directory
 ├── readme.md
 ├── __test__
@@ -45,26 +46,27 @@ Project Root Directory
 ├── package.json.lock
 ├── webpack.dev.js
 └── webpack.prod.js
+</pre>
 
 ## Instructions
 Before setting up and running this project, make sure NodeJS and npm are installed in your environment.
 To install, run... Please go to project dirrectory and run below command on terminal (or cmd/windows powershell..).
 
- *  Setup
+### Setup
 `npm install`
   - Check installation result on terminal. If project installed successfull, `node_module` directory will be created without error.
 
- *  Build
+### Build
   - Dev envirionemnt:
     `npm run build-dev`
   - Production envirionemnt:
     `npm run build-prod`
 
- *  Test
+### Test
     `npm run test`
   - Check the test result.
 
- *  Running 
+### Running 
   - Start backend:
     `npm start`
 
