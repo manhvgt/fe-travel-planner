@@ -11,16 +11,17 @@
     justify-content: center;
 }
 
-@media only screen and (max-width: 20em) {
+@media only screen and (max-width: 15em) {
     #outputCurrentInfo {
         grid-template-rows: repeat(auto-fit, minmax(10em, 1fr));;
         grid-template-areas:
         "weatherIllustration"
         "weatherInfo"; 
+        padding-left: 1em;
     }
 }
 
-@media only screen and (min-width: 20em) {
+@media only screen and (min-width: 18em) {
     #outputCurrentInfo {
         grid-template-columns: repeat(auto-fit, minmax(10em, 1fr));;
         grid-template-areas: 

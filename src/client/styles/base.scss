@@ -21,14 +21,50 @@ section {
     grid-auto-rows: auto;
     background: #ffffff;
     color: #00ff22;
-    justify-content: center;
+    justify-content:center;
     align-content: center;
     grid-gap: 1em;
     font-size: 1.2em;
-    line-height: 1.4;
+    line-height: 1.6;
     align-items: center;
     font-family: 'Oswald', sans-serif;
     border-radius: 10px;
+}
+
+#locationArea {
+    display: grid;
+    grid-template-rows: auto;
+    min-width: 18em;
+    width: 100%;
+    justify-content:center;
+    row-gap: 1em;
+}
+
+#weatherArea {
+    display: grid;
+    grid-template-rows: auto;
+    min-width: 18em;
+    width: 100%;
+    justify-content:flex-start;
+    row-gap: 1em;
+}
+
+
+@media only screen and (max-width: 45em) {
+    #app {
+        grid-template-rows: repeat(auto-fit, minmax(10em, 1fr));;
+        grid-template-areas:
+        "locationArea"
+        "weatherArea"; 
+    }
+}
+
+@media only screen and (min-width: 45em) {
+    #app {
+        grid-template-columns: repeat(auto-fit, minmax(10em, 1fr));;
+        grid-template-areas: 
+        "locationArea" "weatherArea";       
+    }
 }
 
 .holder{

@@ -4,8 +4,8 @@ const url_weather = 'weather';
 const api_forecast = 'forecast'; // Current weather and forecast
 const api_predict = 'predict'; // Predicted forecast
 const api_forecast_max_days = 16;
-const api_min_days = -0;
-const api_max_days = 5;
+const api_min_days = -1;
+const api_max_days = 4;
 
 // For Image viewer
 let imgViewerInterval = 3500;
@@ -17,6 +17,8 @@ let imgViewerIdx = 0;
 // DOM elements
 // Input
 const btnGenerateByCity = document.getElementById("btnGenerateByCity");
+const lblCountdown = document.getElementById("lblPlanningDateCount");
+const btnSave = document.getElementById("btnSaveData");
 // Output (Current)
 const outCurrentInfo = document.getElementById("outputCurrentInfo");
 const outCountry = document.getElementById("outCountry");
@@ -36,17 +38,34 @@ const imgViwer = document.getElementById("outImageViewer");
 // Add event listener to get data button
 document.addEventListener('DOMContentLoaded', () => {
     // Set default value as today
-    setDefaultDate();
+    setDefaultDateAndGui();
     setInterval(switchImage, imgViewerInterval);
 
     // Add listener
     btnGenerateByCity.addEventListener('click', getDataByCityListener);
+    dpkPlanningDate.addEventListener('change', countdownListener);
+    btnSave.addEventListener('click', requestCRUDListener);
 });
 
-function setDefaultDate() {
+function setDefaultDateAndGui() {
     const today = new Date().toISOString().split('T')[0];
     dpkPlanningDate.setAttribute("min", today);
     dpkPlanningDate.value = today;
+    btnSave.style.display = 'none';
+    btnSave.disabled = true;
+    btnSave.classList.add('disabled');
+    document.getElementById("weatherArea").style.display = 'none';
+}
+
+function countdownListener(event) {
+    event.preventDefault();
+    const difDate = dayDifferenceFromToday(dpkPlanningDate.value);
+    lblCountdown.innerHTML = `Countdown: <span style="color: blue; font-size: 1.2em">${difDate}</span> days left`;
+}
+
+function requestCRUDListener(event) {
+    event.preventDefault();
+    console.log("Button clicked. Request server to process. (Future function)");
 }
 
 // Update GUI while waiting API called and data processing
@@ -99,7 +118,7 @@ async function getDataByCityListener(event) {
     // Too long
     const diffDate = dayDifferenceFromToday(pickedDate);
     if(diffDate > api_forecast_max_days) {
-        alert(`The date is too far. Currently app supports ${api_forecast_max_days} days`);
+        alert(`The date is too far. Currently app supports ${api_forecast_max_days} days from today!`);
         return;
     }
 
@@ -188,6 +207,12 @@ async function updateGUI(info) {
     if(info.photos.length > 0) {
         updateGUI_photos(info.photos)
     }
+
+    // Button save
+    btnSave.style.display = '';
+    btnSave.disabled = false;
+    btnSave.classList.remove('disabled');
+    document.getElementById("weatherArea").style.display = '';
 }
 
 async function updateGUI_reset() {
@@ -197,6 +222,7 @@ async function updateGUI_reset() {
     outPhotos.style.display = 'none';
     imgViewerEnable = false;
     imgViewerSrc = [];
+    document.getElementById("weatherArea").style.display = 'none';
 }
 
 // Function to update GUI

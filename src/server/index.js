@@ -27,6 +27,7 @@ const API_URL_BASE_FORECAST = process.env.API_URL_BASE_FORECAST;
 const FORECAST_MAX_DAY = process.env.FORECAST_MAX_DAY;
 const API_FORECAST = 'forecast'; // Current weather and forecast
 const API_PREDICT = 'predict'; // Predicted forecast
+const API_CLIMATE = 'climate'; // climate normal
 const API_PHOTOS_MAX = 16;
 
 // Setup Server
