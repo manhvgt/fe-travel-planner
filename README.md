@@ -65,6 +65,30 @@ To install, run... Please go to project dirrectory and run below command on term
 ### Setup
 `npm install`
   - Check installation result on terminal. If project installed successfull, `node_module` directory will be created without error.
+  - It is required a `.env` file for somne parameters and key. Please manualy create the file and put content as below format.
+  <pre>
+    # Server setup
+    HOST_NAME = 'localhost'
+    PORT = '8080'
+
+    # Weatherapi.com
+    API_KEY_WEATHER_COM = 'Get API Key from site and put here'
+    API_URL_BASE_CURRENT = 'http://api.weatherapi.com/v1/current.json?key='
+    API_URL_BASE_FORECAST = 'http://api.weatherapi.com/v1/forecast.json?key='
+    FORECAST_MAX_DAY = 3
+
+    # geoapify.com
+    API_KEY_GEO = 'Get API Key from site and put here'
+    API_URL_GEO = 'https://api.geoapify.com/v1/geocode/search?text='
+
+    # WeatherBit.io
+    API_KEY_WEATHER_BIT = 'Get API Key from site and put here	'
+    API_URL_WEATHER_BIT = 'http://api.weatherbit.io/v2.0/forecast/daily?'
+
+    # Pixabay API
+    API_KEY_PIXABAY = 'Get API Key from site and put here'
+    API_URL_PIXABAY = 'https://pixabay.com/api/?key='
+  </pre>
 
 ### Build
   - Dev envirionemnt:\
