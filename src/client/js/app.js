@@ -4,8 +4,8 @@ const url_weather = 'weather';
 const api_forecast = 'forecast'; // Current weather and forecast
 const api_predict = 'predict'; // Predicted forecast
 const api_forecast_max_days = 16;
-const api_min_days = -1;
-const api_max_days = 2;
+const api_min_days = -0;
+const api_max_days = 5;
 
 // For Image viewer
 let imgViewerInterval = 3500;
@@ -17,8 +17,6 @@ let imgViewerIdx = 0;
 // DOM elements
 // Input
 const btnGenerateByCity = document.getElementById("btnGenerateByCity");
-const inCityName = document.getElementById("inCityName");
-const dpkPlanningDate = document.getElementById("dpkPlanningDate");
 // Output (Current)
 const outCurrentInfo = document.getElementById("outputCurrentInfo");
 const outCountry = document.getElementById("outCountry");
@@ -45,14 +43,14 @@ document.addEventListener('DOMContentLoaded', () => {
     btnGenerateByCity.addEventListener('click', getDataByCityListener);
 });
 
-export function setDefaultDate() {
+function setDefaultDate() {
     const today = new Date().toISOString().split('T')[0];
     dpkPlanningDate.setAttribute("min", today);
     dpkPlanningDate.value = today;
 }
 
 // Update GUI while waiting API called and data processing
-export function updateGUI_processing(isProcessing) {
+function updateGUI_processing(isProcessing) {
     if(isProcessing) {
         btnGenerateByCity.disabled = true;
         btnGenerateByCity.classList.add('disabled');
@@ -84,18 +82,20 @@ function dayDifference(start, end) {
 }
 
 // Function to handle generate button by City Name
-export async function getDataByCityListener(event) {
+async function getDataByCityListener(event) {
     // setup
-    event.preventDefault();
-
+    const inCityName = document.getElementById("inCityName");
+    const dpkPlanningDate = document.getElementById("dpkPlanningDate");
     // Input validation
-    const city = inCityName.value.trim();
-    const pickedDate = dpkPlanningDate.value;
-    // const feelings = inFeelings.value.trim();
-    if(!city || !pickedDate) {
+    if(!inCityName.value || !dpkPlanningDate.value) {
         alert("Please enter city name and pick a date then retry!");
         return;
     }
+    event.preventDefault();
+
+    const city = inCityName.value.trim();
+    const pickedDate = dpkPlanningDate.value;
+
     // Too long
     const diffDate = dayDifferenceFromToday(pickedDate);
     if(diffDate > api_forecast_max_days) {
@@ -126,10 +126,11 @@ export async function getDataByCityListener(event) {
 };
 
 // Function for POST to request for current weather data.
-export async function postWeather(rawData) {
+async function postWeather(rawData) {
     if(!rawData) {
         // alert("Warning! Failed to handling GET data. Please try again!");
         console.error("null input!");
+        return;
     }
 
     // console.log("rawData: ", rawData);
@@ -163,7 +164,7 @@ export async function postWeather(rawData) {
     }
 };
 
-export async function updateGUI(info) {
+async function updateGUI(info) {
     if(!info) {
         console.error("null input!");
         return;
@@ -189,7 +190,7 @@ export async function updateGUI(info) {
     }
 }
 
-export async function updateGUI_reset() {
+async function updateGUI_reset() {
     outCurrentInfo.style.display = 'none';
     outForecastInfo.style.display = 'none';
     outForecastInfo.innerHTML = '';
@@ -199,7 +200,7 @@ export async function updateGUI_reset() {
 }
 
 // Function to update GUI
-export async function updateGUI_current(info) {
+async function updateGUI_current(info) {
     if(!info) {
         console.error("null input!");
         return;
@@ -223,7 +224,7 @@ export async function updateGUI_current(info) {
 };
 
 // Forecast infomation update by weatherAPI
-export async function updateGUI_forecast(info) {
+async function updateGUI_forecast(info) {
     info.forecast.forEach(day => {
         createForecastDay(day);
     });
@@ -232,7 +233,7 @@ export async function updateGUI_forecast(info) {
     outForecastInfo.style.display = '';
 }
 
-export async function createForecastDay(dayInfo) {
+async function createForecastDay(dayInfo) {
     // outForecastDay
     const dayDiv = document.createElement("div");
     dayDiv.id = "outForecastDay";
@@ -275,14 +276,14 @@ export async function createForecastDay(dayInfo) {
     outForecastInfo.appendChild(dayDiv);
 }
 
-export async function updateGUI_predict(info) {
+async function updateGUI_predict(info) {
     // console.log("updateGUI_predict start: ", info);
     // Same interface -> reuse function
     updateGUI_forecast(info);
 }
 
 
-export async function updateGUI_photos(photos) {
+async function updateGUI_photos(photos) {
     outPhotos.style.display = 'none';
     imgViewerEnable = true;
     imgViewerCount = photos.length;
@@ -293,9 +294,11 @@ export async function updateGUI_photos(photos) {
     switchImage();
 }
 
-export function switchImage() {
+function switchImage() {
     if(imgViewerEnable) {
         imgViewerIdx = (imgViewerIdx + 1) % imgViewerCount;
         imgViwer.src = imgViewerSrc[imgViewerIdx].previewURL;
     }
 }
+
+export {getDataByCityListener, postWeather, updateGUI_processing, dayDifferenceFromToday};

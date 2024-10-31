@@ -45,8 +45,17 @@ app.get('/weather', async (req, res) => {
 
 // Callback function to complete POST '/weather'
 app.post('/weather', async (req, res) => {
-    console.log(req.body);
+    const reqBody = req.body;
+    if( !reqBody || Object.keys(reqBody).length < 2 ){
+        res.status(400).json({ error: 'Bad Request', message: 'city and diffdate are required.' });
+        return;
+    }
     const { city ,diffDate } = req.body;
+    if( city === null || diffDate === null ){
+        res.status(400).json({ error: 'Bad Request', message: 'city and diffdate are required.' });
+        return;
+    }
+    console.log(req.body);
 
     // Based on date of difference call diff api
     let apiType = "";
@@ -380,3 +389,6 @@ function getIconUrl(code) {
     }
     return icons[code];
 }
+
+// Export for testing
+module.exports = app;
