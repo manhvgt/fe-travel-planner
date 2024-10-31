@@ -57,22 +57,23 @@ To install, run... Please go to project dirrectory and run below command on term
   - Check installation result on terminal. If project installed successfull, `node_module` directory will be created without error.
 
 ### Build
-  - Dev envirionemnt:
-    `npm run build-dev`
-  - Production envirionemnt:
-    `npm run build-prod`
+  - Dev envirionemnt:\
+  `npm run build-dev`
+
+  - Production envirionemnt:\
+  `npm run build-prod`
 
 ### Test
-    `npm run test`
+  `npm run test`
   - Check the test result.
 
 ### Running 
-  - Start backend:
+  - Start backend:\
     `npm start`
 
-  - Start the app using:
-  Dev:  `http://localhost:3000/`
-  Prod: `http://localhost:8080/`
+  - Start the app using:\
+  Dev:  `http://localhost:3000/`\
+  Prod: `http://localhost:8080/`\
 
 ## License
 This project is modified and updated for study purpose on Udacity.
